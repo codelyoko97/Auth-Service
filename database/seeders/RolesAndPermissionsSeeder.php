@@ -113,10 +113,10 @@ class RolesAndPermissionsSeeder extends Seeder
     {
         foreach ($permissionIds as $permissionId) {
 
-            DB::table('permission_role')->updateOrInsert(
+            DB::table('permession_role')->updateOrInsert(
                 [
                     'role_id' => $roleId,
-                    'permission_id' => $permissionId,
+                    'permession_id' => $permissionId,
                 ],
                 []
             );

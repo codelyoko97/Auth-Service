@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('permission_role', function (Blueprint $table) {
+        Schema::create('permession_role', function (Blueprint $table) { //permession_role
             $table->id();
-            $table->foreignId('permission_id');
+            $table->foreignId('permession_id');
             $table->foreignId('role_id');
 
             $table->timestamps();
 
-            $table->unique(['permission_id', 'role_id']);
+            $table->unique(['permession_id', 'role_id']);
         });
     }
 

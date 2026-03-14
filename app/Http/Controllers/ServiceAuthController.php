@@ -2,14 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreateServiceRequest;
 use App\Models\ServiceClient;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ServiceAuthController extends Controller
 {
+    public function createService(CreateServiceRequest $createServiceRequest) {
+        $data = $createServiceRequest->only(['name', 'client_secret']);
+        $data['client_secret'] = Hash::make($data['client_secret']);
+        $data['client_id'] = (string) Str::ulid();
+        return ServiceClient::create($data);
+    }
+
     public function token(Request $request)
     {
 

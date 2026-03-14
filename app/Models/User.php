@@ -67,4 +67,17 @@ class User extends Authenticatable
             'project_user'
         )->withPivot('role_id');
     }
+
+    public function roles() {
+        return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id')->withTimestamps();
+    }
+
+    public function permessions() {
+        return $this->roles()
+            ->with('permessions')
+            ->get()
+            ->pluck('permessions')
+            ->flatten()
+            ->unique('id');
+    }
 }
