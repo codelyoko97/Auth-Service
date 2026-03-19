@@ -56,4 +56,10 @@ class EloquentUserRepository implements UserRepositoryInterface {
             ->where('user_id', $decoded->sub)
             ->update(['revoked' => true]);
     }
+
+    public function updatePassword($userId, $hashedPassword) {
+        return User::where('id', $userId)->update([
+            'password' => $hashedPassword
+        ]);
+    }
 }

@@ -13,6 +13,7 @@ use App\Services\JwtService;
 use App\Services\ProjectServices;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class ProjectController extends Controller
 {
@@ -25,84 +26,39 @@ class ProjectController extends Controller
         $this->projectService = $projectServices;
     }
 
-    public function createProject(ProjectRequest $projectRequest) {
-        $user = User::find($projectRequest->owner_id);
-
-        if(!$user) {
-            return response()->json([
-                'message' => 'User Not Found'
-            ], 404);
+    public function sign_in_project(Request $request, $projectId) {
+        $token = $request->bearerToken();
+        $decode = $this->jwtService->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
+        $user = User::find($decode->sub);
 
-        if(!$user->is_verified) {
+        $response = $this->exsists_in_project($user->id, $projectId);
+        if(!$response) {
             return response()->json([
-                'message' => 'Account Not Verified, Verify It First'
-            ], 400);
-        }
-
-        $data = $projectRequest->only(['owner_id', 'name','slug','is_active','settings']);
-
-        $project = $this->projectService->createProjectService($data);
-
-        $this->jwtService->generateProjectToken($user->id, $project->id, 'owner');
-
-        return $project;
-    }
-
-    public function invitePerson(InvitationRequest $invitationRequest) {
-        $data = $invitationRequest->only('project_id','role_id','email');
-        $invitation = $this->projectService->creteInvitationService($data);
-        if($invitation) {
-            return response()->json([
-                'message' => 'Invitaion sent successfully',
-                'data' => $invitation
+                'user_data' => $user,
+                'project_id' => $projectId
             ]);
         }
-        return response()->json('Somthing went wrong please try again!');
-    }
 
-    public function verifyJoinProject(VerifyProjectJoinRequest $verify) {
-        $user = DB::table('users')
-            ->where('email', $verify->email)
-            ->first();
-        if(!$user) {
-            return response()->json([
-                'error' => 'Access Denied!, You have to register in our Platform',
-            ],403);
-        }
-
-        $invitation = DB::table('project_invitations')
-            ->where('project_id', $verify->project_id)
-            ->where('email', $verify->email)
-            ->first();
-
-        if(!$invitation) {
-            return response()->json([
-                'error' => 'Access Denied!',
-            ],403);
-        }
-
-        $invit = Invitation::find($invitation->id);
-        $data = $verify->only(['project_id','email', 'otp']);
-        $data['user_id'] = $user->id;
-        $join = $this->projectService->verifyOTP($invit, $data);
-
-        if(!$join) {
-            return response()->json([
-                'message' => 'You cannot join this project, or you are already a member!'
-            ],403);
-        }
-
-        DB::table('project_user')->insert([
-            'project_id' => $verify->project_id,
-            'user_id' => $user->id,
-            'role_id' => $invitation->role_id
-        ]);
         return response()->json([
-            'message' => 'Joined Successfully'
-        ],200);
+            'message' => 'You are already a member of this project'
+        ]);
     }
 
+    public function exsists_in_project($userId, $projectId):bool {
+        $response = Http::withHeaders([
+        'X-Project-Key' => $projectId,
+        ])->post('http://localhost:8001/api/check-project-access', [
+            'user_id' => $userId
+        ]);
+
+        $data = $response->json('has_access');
+        return $data;
+    }
+
+    // Temp
     public function select(Request $request) {
         $userId = $request->auth_user_id;
         $projectId = $request->project_id;

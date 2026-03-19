@@ -10,28 +10,27 @@ class OperationServices {
     {
         $this->operations = $operationRepositoryInteface;
     }
-    public function getUsersPlatformService() {
+    public function getUsersService() {
         return $this->operations->getAllUsers();
     }
 
-    public function getProjectAllUsers(int $projectId) {
-        return $this->operations->getProjectAllUsers($projectId);
+    public function assginRoleService(array $data) {
+        return $this->operations->assginRoleToUser($data['user_id'], $data['role_id']);
     }
 
-    public function assginRolePlatformService(array $data) {
-        return $this->operations->assginRoleToUserPlatform($data['user_id'], $data['role_id']);
+    public function removeRoleService(array $data) {
+        return $this->operations->removeRoleFromUser($data['user_id']);
     }
 
-    public function assginRoleProjectService(array $data) {
-        return $this->operations->assginRoleToUserProject($data['project_id'], $data['user_id'], $data['role_id']);
+    public function addPermessionService(array $data) {
+        return $this->operations->addPermession($data['permession']);
     }
 
-    public function removeRolePlatformService(array $data) {
-        return $this->operations->removeRoleFromUserPlatform($data['user_id']);
+    public function assginPermToRoleService(array $data) {
+        return $this->operations->assginPermToRole($data['permession_id'], $data['role_id']);
     }
 
-    public function removeRoleProjectService(array $data) {
-        return $this->operations->removeRoleFromUserProject($data['project_id'], $data['user_id']);
+    public function removePermToRoleService(array $data) {
+        return $this->operations->removePermFromRole($data['permession_id'], $data['role_id']);
     }
-
 }

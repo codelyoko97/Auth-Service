@@ -18,7 +18,6 @@ class MeController extends Controller
 
     public function index(Request $request)
     {
-
         $token = $request->bearerToken();
 
         $publicKey = file_get_contents(storage_path('keys/jwt_public.pem'));
@@ -30,7 +29,7 @@ class MeController extends Controller
         return response()->json($user);
     }
 
-    public function profile($id) {
+    public function profile($id) { // For services
         $user = User::find($id);
         $user->load('roles.permessions');
         return response()->json([
@@ -38,7 +37,7 @@ class MeController extends Controller
         ]);
     }
 
-    public function myProfile(Request $request) {
+    public function myProfile(Request $request) { // For users
         $token = $request->bearerToken();
         $decode = $this->jwt->validateToken($token);
         if(!$decode) {

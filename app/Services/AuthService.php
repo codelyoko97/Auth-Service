@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Repositories\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 class AuthService {
     protected $users;
@@ -101,18 +102,28 @@ class AuthService {
         $payload = $this->jwt->validateToken($accessToken);
 
         if (!$payload) {
-            throw new \Exception('Invalid token');
+            throw new Exception('Invalid token');
         }
 
         $sessionId = $payload->sid ?? null;
 
         if (!$sessionId) {
-            throw new \Exception('Session ID missing');
+            throw new Exception('Session ID missing');
         }
 
         $this->users->revoke($accessToken, $decoded);
+    }
 
-        
+    public  function changePassword($data) {
+    {
+        if (!Hash::check($data['current_password'], $data['user']->password)) {
+            throw new Exception('Current password is incorrect');
+        }
 
+        $this->users->updatePassword(
+            $data['user']->id,
+            Hash::make($data['new_password'])
+        );
+    }
     }
 }

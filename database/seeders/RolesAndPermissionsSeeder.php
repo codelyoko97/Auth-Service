@@ -117,6 +117,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 [
                     'role_id' => $roleId,
                     'permession_id' => $permissionId,
+                    'created_at' => now(),
+                    'updated_at' => now()
                 ],
                 []
             );

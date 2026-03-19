@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\VerifyOTPRequest;
@@ -66,13 +67,6 @@ class AuthController extends Controller
             'expires_in' => config('jwt.ttl') * 60,
             'user' => $user
         ]);
-        // $token = $user->createToken('api-token')->plainTextToken;//sanctum
-
-        // return response()->json([
-        //     'message' => 'Verified',
-        //     'token' => $token,
-        //     'user' => $user
-        // ]);
     }
 
     public function resendOTP(Request $request) {
@@ -117,15 +111,6 @@ class AuthController extends Controller
             'token_type'    => 'Bearer',
             'user' => $user
         ], 200);
-
-        // $token = $user->createToken('api-token')->plainTextToken;
-
-        // $token = $this->jwtService->generateToken($user);
-
-        // return response()->json([
-        //     'token' => $token,
-        //     'user' => $user
-        // ], 200);
     }
 
     public function refresh(Request $request, JwtService $jwtService)
@@ -172,4 +157,20 @@ class AuthController extends Controller
         ]);
     }
 
+     public function changePassword(ChangePasswordRequest $request)
+    {
+        $token = $request->bearerToken();
+        $decode = $this->jwtService->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $user = User::find($decode->sub);
+        $data = $request->only(['current_password', 'new_password']);
+        $data['user'] = $user;
+        $this->authService->changePassword($data);
+
+        return response()->json([
+            'message' => 'Password changed successfully'
+        ]);
+    }
 }

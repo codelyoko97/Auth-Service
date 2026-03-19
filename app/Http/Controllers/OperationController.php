@@ -2,35 +2,39 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Services\JwtService;
 use App\Services\OperationServices;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class OperationController extends Controller
 {
     protected $operations;
+    protected $jwt;
 
-    public function __construct(OperationServices $operationServices)
+    public function __construct(OperationServices $operationServices, JwtService $jwtService)
     {
         $this->operations = $operationServices;
+        $this->jwt = $jwtService;
     }
 
-    public function getAllUsers() {
-        $user = Auth::user();
-        if($user) {
-            $role = DB::table('role_user')
-                ->where('role_id', 2)
-                ->where('user_id', $user->id)
-                ->first();
+    public function getAllUsers(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-            if(!$role) {
+        $user = User::find($decode->sub);
+
+        if($user) {
+            if(!User::is_super_admin($user)) {
                 return response()->json([
                     'message' => 'Not authorized',
                 ], 401);
             }
 
-            $users = $this->operations->getUsersPlatformService();
+            $users = $this->operations->getUsersService();
 
             return response()->json([
                 'message' => 'Plataform Users:',
@@ -39,55 +43,29 @@ class OperationController extends Controller
         }
 
         return response()->json([
-                'message' => 'Somthig went wrong! User not found',
-            ], 404);
+            'message' => 'Somthig went wrong! User not found',
+        ], 404);
     }
 
-    public function getAllProjectUsers($projectId) {
-        $user = Auth::user();
-        if($user) {
-            $project = DB::table('project_user')
-                ->where('project_id', $projectId)
-                ->where('user_id', $user->id)
-                ->where('role_id', 1)
-                ->first();
-
-            if(!$project) {
-                return response()->json([
-                    'message' => 'Not authorized',
-                ], 401);
-            }
-
-            $users = $this->operations->getProjectAllUsers($project->id);
-
-            return response()->json([
-                'message' => 'Project Users:',
-                'data' => $users,
-            ], 200);
+    public function assginRoleToUser(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        return response()->json([
-                'message' => 'Somthig went wrong! User not found',
-            ], 404);
-    }
+        $user = User::find($decode->sub);
 
-    public function assginRoleToUserPlatform(Request $request) {
-        $user = $request->user();
         $data = $request->only(['user_id', 'role_id']);
 
         if($user) {
-            $role = DB::table('role_user')
-                ->where('role_id', 2)
-                ->where('user_id', $user->id)
-                ->first();
-
-            if(!$role) {
+            if(!User::is_super_admin($user) && !User::is_admin($user)) {
                 return response()->json([
                     'message' => 'Not authorized',
                 ], 401);
             }
 
-            $assignment = $this->operations->assginRolePlatformService($data);
+            $assignment = $this->operations->assginRoleService($data);
 
             if($assignment) {
                 return response()->json([
@@ -97,13 +75,135 @@ class OperationController extends Controller
         }
 
         return response()->json([
-                'message' => 'Somthig went wrong!',
-            ], 404);
+            'message' => 'Somthig went wrong!',
+        ], 404);
     }
 
-    public function assginRoleToUserProject() {}
+    public function removeRoleFromUser(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
-    public function removeRoleFromUserPlatform() {}
+        $user = User::find($decode->sub);
 
-    public function removeRoleFromUserProject() {}
+        $data = $request->only(['user_id']);
+
+        if($user) {
+            if(!User::is_super_admin($user) && !User::is_admin($user)) {
+                return response()->json([
+                    'message' => 'Not authorized',
+                ], 401);
+            }
+
+            $assignment = $this->operations->removeRoleService($data);
+
+            if($assignment) {
+                return response()->json([
+                    'message' => 'Done',
+                ], 200);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Somthig went wrong!',
+        ], 404);
+    }
+
+    public function add_permession(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $user = User::find($decode->sub);
+
+        $data = $request->only(['permession']);
+
+        if($user) {
+            if(!User::is_super_admin($user)) {
+                return response()->json([
+                    'message' => 'Not authorized',
+                ], 401);
+            }
+            $done = $this->operations->addPermessionService($data);
+            if($done) {
+                return response()->json([
+                    'message' => 'The permession added successfuly',
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Something went wrong, Try again!'
+            ]);
+        }
+        return response()->json([
+            'message' => 'Not authorized',
+        ], 401);
+    }
+
+    public function assign_permession_to_role(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $user = User::find($decode->sub);
+
+        $data = $request->only(['permession_id', 'role_id']);
+
+        if($user) {
+            if(!User::is_super_admin($user)) {
+                return response()->json([
+                    'message' => 'Not authorized',
+                ], 401);
+            }
+
+            $assignment = $this->operations->assginPermToRoleService($data);
+
+            if($assignment) {
+                return response()->json([
+                    'message' => 'Done',
+                ], 200);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Somthig went wrong!',
+        ], 404);
+    }
+    public function remove_permession_from_role(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $user = User::find($decode->sub);
+
+        $data = $request->only(['permession_id', 'role_id']);
+
+        if($user) {
+            if(!User::is_super_admin($user)) {
+                return response()->json([
+                    'message' => 'Not authorized',
+                ], 401);
+            }
+
+            $assignment = $this->operations->removePermToRoleService($data);
+
+            if($assignment) {
+                return response()->json([
+                    'message' => 'Done',
+                ], 200);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Somthig went wrong!',
+        ], 404);
+    }
 }
