@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Role;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,14 @@ class EloquentOperationRepositories implements OperationRepositoryInteface {
             ->where('role_id', $roleId)
             ->where('permession_id', $permId)
             ->delete();
+    }
+
+    public function getAllRoles(){
+        return DB::table('roles')->get('name');
+    }
+
+    public function getAllPermissions() {
+        return DB::table('permessions')->get('name');
     }
 }
 

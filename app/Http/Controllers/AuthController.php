@@ -157,7 +157,7 @@ class AuthController extends Controller
         ]);
     }
 
-     public function changePassword(ChangePasswordRequest $request)
+    public function changePassword(ChangePasswordRequest $request)
     {
         $token = $request->bearerToken();
         $decode = $this->jwtService->validateToken($token);

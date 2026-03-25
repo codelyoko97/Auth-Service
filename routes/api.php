@@ -18,6 +18,9 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/refresh', [AuthController::class, 'refresh']);
 
+Route::get('get-all-roles', [OperationController::class, 'getAllRoles']);
+Route::get('get-all-permissions', [OperationController::class, 'getAllPermissions']);
+
 // Secure processes:
 Route::middleware(['auth.jwt'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

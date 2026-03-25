@@ -33,4 +33,12 @@ class OperationServices {
     public function removePermToRoleService(array $data) {
         return $this->operations->removePermFromRole($data['permession_id'], $data['role_id']);
     }
+
+    public function getAllRolesService() {
+        return $this->operations->getAllRoles();
+    }
+
+    public function getAllPermissionsService() {
+        return $this->operations->getAllPermissions();
+    }
 }
