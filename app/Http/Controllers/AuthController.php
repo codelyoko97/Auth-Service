@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ChangePasswordRequest;
+use App\Http\Requests\GetUsersByIdsRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\VerifyOTPRequest;
@@ -171,6 +172,18 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Password changed successfully'
+        ]);
+    }
+
+    function getByIds(GetUsersByIdsRequest $request)
+    {
+        $users = $this->authService->getUsersByIds(
+            $request->validated('ids')
+        );
+
+        return response()->json([
+            'message' => 'Users fetched successfully.',
+            'data' => $users
         ]);
     }
 }

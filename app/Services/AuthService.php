@@ -8,6 +8,7 @@ use App\Repositories\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Collection;
 
 class AuthService {
     protected $users;
@@ -115,7 +116,6 @@ class AuthService {
     }
 
     public  function changePassword($data) {
-    {
         if (!Hash::check($data['current_password'], $data['user']->password)) {
             throw new Exception('Current password is incorrect');
         }
@@ -125,5 +125,11 @@ class AuthService {
             Hash::make($data['new_password'])
         );
     }
+
+    public function getUsersByIds(array $ids): Collection
+    {
+        $ids = array_unique($ids);
+
+        return $this->users->getUsersByIds($ids);
     }
 }

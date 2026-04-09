@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class EloquentUserRepository implements UserRepositoryInterface {
@@ -61,5 +62,13 @@ class EloquentUserRepository implements UserRepositoryInterface {
         return User::where('id', $userId)->update([
             'password' => $hashedPassword
         ]);
+    }
+
+
+    public function getUsersByIds(array $ids): Collection {
+        return User::query()
+            ->whereIn('id', $ids)
+            ->select('id', 'name')
+            ->get();
     }
 }

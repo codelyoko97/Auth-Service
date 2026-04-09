@@ -20,6 +20,8 @@ Route::post('/refresh', [AuthController::class, 'refresh']);
 
 Route::get('get-all-roles', [OperationController::class, 'getAllRoles']);
 Route::get('get-all-permissions', [OperationController::class, 'getAllPermissions']);
+Route::post('users/by-ids', [AuthController::class, 'getByIds']);
+
 
 // Secure processes:
 Route::middleware(['auth.jwt'])->group(function () {
