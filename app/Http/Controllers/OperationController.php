@@ -206,4 +206,28 @@ class OperationController extends Controller
             'message' => 'Somthig went wrong!',
         ], 404);
     }
+
+    public function getAllRoles() {
+        $roles = $this->operations->getAllRolesService();
+        if(!empty($roles)) {
+            return response()->json([
+                'roles' => $roles
+            ]);
+        }
+        return response()->json([
+            'message' => 'Ther is no roles'
+        ]);
+    }
+
+    public function getAllPermissions() {
+        $permissions = $this->operations->getAllPermissionsService();
+        if(!empty($permissions)) {
+            return response()->json([
+                'permissions' => $permissions
+            ]);
+        }
+        return response()->json([
+            'message' => 'Ther is no permissions'
+        ]);
+    }
 }
