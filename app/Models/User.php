@@ -69,6 +69,10 @@ class User extends Authenticatable
         )->withPivot('role_id');
     }
 
+    public function sessions() {
+        return $this->hasMany(MySession::class);
+    }
+
     public function roles() {
         return $this->belongsToMany(Role::class, 'role_user', 'user_id', 'role_id')->withTimestamps();
     }

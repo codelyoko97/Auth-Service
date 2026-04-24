@@ -46,8 +46,9 @@ class MeController extends Controller
 
         $user = User::find($decode->sub);
         $user->load('roles.permessions');
+        $user->load('sessions');
         return response()->json([
-            'data' => $user,
+            'data' => $user
         ]);
     }
 

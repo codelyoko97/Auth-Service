@@ -28,6 +28,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'show.user',
             'delete.user',
             'update.user',
+            'notifications.create',
+            'notifications.manage',
         ];
 
         $permissionIds = [];
@@ -95,6 +97,8 @@ class RolesAndPermissionsSeeder extends Seeder
             $permissionIds['read.data'],
             $permissionIds['update.data'],
             $permissionIds['delete.data'],
+            $permissionIds['notifications.create'],
+            $permissionIds['notifications.manage'],
         ]);
 
         // super_admin → جميع الصلاحيات
