@@ -47,6 +47,7 @@ Route::post('/service/token', [ServiceAuthController::class, 'token']); // تو�
 // Services Processes:
 //هذا endpoint يجب أن يكون لـ services فقط وليس للمستخدمين.
 Route::middleware('service.auth')->group(function () {
+    Route::get('get-service', [ServiceAuthController::class, 'getService']);
   Route::get('/users/{id}', [UserInfoController::class, 'show']);
   Route::get('/me', [MeController::class, 'index']);
   Route::get('/profile/{id}', [MeController::class, 'profile']); // new خدمة تصل إلى مستخدم محدد باستخدام التوكن الخاص بالخدمة و رقم المستخدم id

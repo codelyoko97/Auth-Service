@@ -3,16 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateServiceRequest;
+use App\Models\MySession;
 use App\Models\ServiceClient;
+use App\Models\ServiceSession;
+use App\Services\JwtService;
+use App\Services\SessionService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ServiceAuthController extends Controller
 {
+    protected $session;
+    protected $jwt;
+    public function __construct(SessionService $sessionService, JwtService $jwtService)
+    {
+        $this->session = $sessionService;
+        $this->jwt = $jwtService;
+    }
+
     public function createService(CreateServiceRequest $createServiceRequest) {
         $data = $createServiceRequest->only(['name', 'client_secret']);
         $data['client_secret'] = Hash::make($data['client_secret']);
@@ -33,25 +47,54 @@ class ServiceAuthController extends Controller
             return response()->json(['error' => 'Invalid secret'], 401);
         }
 
-        $privateKey = file_get_contents(storage_path('keys/jwt_private.pem'));
+        //Create Session:
+        $sessionId = $this->session->createServiceSession(
+            $client->client_id,
+            $client->id
+        );
 
-        $payload = [
+        $privateKey = file_get_contents(storage_path('keys/private.key'));
 
-            'iss' => 'auth-service',
-
-            'client' => $client->name,
-
-            'type' => 'service',
-
-            'iat' => time(),
-
-            'exp' => time() + 3600
-        ];
-
-        $token = JWT::encode($payload, $privateKey, 'RS256');
+        $token = $this->jwt->generateServiceToken($client, $sessionId);
 
         return response()->json([
             'access_token' => $token
+        ]);
+    }
+
+    public function validateToken($token)
+    {
+        $publicKey = file_get_contents(storage_path('keys/public.key'));
+        try {
+            $decoded = JWT::decode($token, new Key($publicKey, 'RS256'));
+
+            // // تحقق من blacklist
+            // $blacklisted = DB::table('token_blacklist')
+            //     ->where('token_id', $decoded->jti)
+            //     ->exists();
+
+            // if ($blacklisted) {
+            //     return null;
+            // }
+
+            return $decoded;
+
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    public function getService(Request $request) {
+        $token = $request->bearerToken();
+        $decode = $this->jwt->validateToken($token);
+        if(!$decode) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $service = ServiceClient::find($decode->sub);
+        $service->load('sessions');
+        return response()->json([
+            'data' => $service
         ]);
     }
 }

@@ -50,30 +50,10 @@ class JwtService
         $this->issuer = config('jwt.issuer');
         $this->algo   = config('jwt.algo');
         $this->ttl    = config('jwt.ttl');
-        // $this->privateKey = file_get_contents(config('jwt.private_key'));
-        // $this->publicKey  = file_get_contents(config('jwt.public_key'));
-        // // $this->privateKey = config('jwt.private_key');
-        // // $this->publicKey  = config('jwt.public_key');
-        // $this->issuer = config('jwt.issuer');
-        // // $this->ttl = config('jwt.ttl', 900);
-        // // $this->privateKey = file_get_contents(config('jwt.private_key'));
-        // // $this->publicKey  = file_get_contents(config('jwt.public_key'));
-        // $this->algo       = config('jwt.algo');
-        // $this->ttl        = config('jwt.ttl');
     }
 
     public function generateToken($user, $sessionId)
     {
-        // $payload = [
-        //     'iss' => config('app.url'),
-        //     'iat' => time(),
-        //     'exp' => time() + ($this->ttl * 60),
-        //     'sub' => $user->id,
-        //     'email' => $user->email,
-        // ];
-
-        // return JWT::encode($payload, $this->privateKey, $this->algo);
-
         $jti = Str::uuid()->toString();
 
         $payload = [
@@ -91,13 +71,6 @@ class JwtService
         // $token = JWT::encode($payload, $this->privateKey, 'RS256');
         $token = JWT::encode($payload, $this->privateKey, $this->algo);
 
-        // DB::table('personal_access_tokens')->insert([
-        //     'tokenable_id' => (string) Str::ulid(),
-        //     'tokenable_type' => 'platform',
-        //     'name' => 'auth_service_token',
-        //     'token' => $token,
-        //     'expires_at' => time() + (config('jwt.access_ttl') * 60),
-        // ]);
 
         return $token;
     }
@@ -153,23 +126,55 @@ class JwtService
         return $token;
     }
 
-    public function generateProjectToken($userId, $projectId, $roleName) {
+    public function generateServiceToken($service, $sessionId)
+    {
         $jti = Str::uuid()->toString();
 
         $payload = [
-            'sub' => $userId,
-            'proj' => $projectId,
-            'role' => $roleName,
-            'type' => 'project',
-            'jti' => $jti,
+            // 'iss' => config('app.url'),
+            'iss' => $this->issuer,
             'iat' => time(),
-            'exp' => time() + 3600
+            'exp' => time() + (config('jwt.access_ttl') * 60),
+            'sub' => $service->id,
+            'sid' => $sessionId,
+            'jti' => $jti,
+            'type'=> 'service',
         ];
 
-        // $projectToken = JWT::encode($payload, $this->privateKey, 'RS256');
-        $projectToken = JWT::encode($payload, $this->privateKey, $this->algo);
-        return $projectToken;
+        // $token = JWT::encode($payload, $this->privateKey, 'RS256');
+        $token = JWT::encode($payload, $this->privateKey, $this->algo);
+
+
+        return $token;
     }
 
+    public function generateServiceRefreshToken($service, $sessionId)
+    {
+        $jti = Str::uuid()->toString();
 
+        $expires = now()->addMinutes(config('jwt.refresh_ttl'));
+
+        DB::table('refresh_tokens')->insert([
+            'user_id'    => $service->id,
+            'token_id'   => $jti,
+            'session_id' => $sessionId,
+            'expires_at' => $expires,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $payload = [
+            'exp' => $expires->timestamp,
+            'sub' => $service->id,
+            'jti' => $jti,
+            'iss' => $this->issuer,
+            'iat' => time(),
+            'type'=> 'refresh'
+        ];
+
+        // $token = JWT::encode($payload, $this->privateKey, 'RS256');
+        $token = JWT::encode($payload, $this->privateKey, $this->algo);
+        //
+        return $token;
+    }
 }

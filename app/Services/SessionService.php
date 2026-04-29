@@ -56,4 +56,24 @@ class SessionService
 
         return 'Browser device';
     }
+
+    public function createServiceSession(
+        string $client_id,
+        int $service_client_id
+    ): string {
+
+        $sessionId = (string) Str::ulid();
+
+        DB::table('service_sessions')->insert([
+            'id' => $sessionId,
+            'client_id' => $client_id,
+            'service_client_id' => $service_client_id,
+            'last_activity_at' => now(),
+            'expires_at' => now()->addDays(30),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return $sessionId;
+    }
 }
